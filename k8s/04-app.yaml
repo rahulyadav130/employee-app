@@ -1,0 +1,102 @@
+# The Node.js application. IMAGE is replaced by the CI/CD pipeline on every deploy.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: employee-app
+  namespace: employee-app
+  labels:
+    app: employee-app
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0     # never drop below 2 ready pods during a deploy
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: employee-app
+  template:
+    metadata:
+      labels:
+        app: employee-app
+    spec:
+      containers:
+        - name: employee-app
+          image: krahulyadav130/employee-app:latest   # <-- replace YOUR_GITHUB_USER
+          imagePullPolicy: IfNotPresent   # safe: CI uses unique commit-SHA tags
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: app-config
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
+          # Readiness: pod gets traffic only when the DB is reachable
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # Liveness: restart the container if the process hangs
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: employee-app
+  namespace: employee-app
+spec:
+  type: ClusterIP
+  selector:
+    app: employee-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+# Exposes the app outside the cluster. Requires an Ingress controller (e.g. ingress-nginx).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: employee-app
+  namespace: employee-app
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: employee.example.com      # <-- replace with your domain (or use nip.io for testing)
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: employee-app
+                port:
+                  number: 80

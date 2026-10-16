@@ -1,0 +1,12 @@
+# Non-secret settings for the app and MySQL. Edit here, then re-apply.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: employee-app
+data:
+  PORT: "3000"
+  DB_HOST: "mysql"          # the Service name above
+  DB_PORT: "3306"
+  DB_USER: "empapp"
+  DB_NAME: "employees"

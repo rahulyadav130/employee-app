@@ -1,0 +1,13 @@
+# Persistent storage for MySQL. Data survives pod restarts and re-deploys.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-data
+  namespace: employee-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path   # uncomment/adjust to match your cluster (kubectl get storageclass)

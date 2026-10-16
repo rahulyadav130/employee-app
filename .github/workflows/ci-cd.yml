@@ -1,0 +1,95 @@
+# CI/CD pipeline:
+#   Pull request  -> run tests and build the image (no push, no deploy)
+#   Push to main  -> run tests, build, push image to GHCR, deploy to Kubernetes
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/employee-app
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+  build:
+    name: Build and push image
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write          # needed to push to GitHub Container Registry
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push (push events only)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' }}
+          # Each commit gets an immutable tag; "latest" is a convenience pointer
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Kubernetes
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production     # add required reviewers in GitHub: Settings > Environments
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Apply manifests (namespace, database, config, app)
+        run: |
+          kubectl apply -f k8s/00-namespace.yaml
+          kubectl apply -f k8s/01-mysql-pvc.yaml
+          kubectl apply -f k8s/02-mysql.yaml
+          kubectl apply -f k8s/03-app-config.yaml
+          kubectl apply -f k8s/04-app.yaml
+
+      - name: Point the deployment at the new image
+        run: |
+          kubectl -n employee-app set image deployment/employee-app \
+            employee-app=${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Wait for rollout (fails the pipeline if pods do not become ready)
+        run: kubectl -n employee-app rollout status deployment/employee-app --timeout=180s
