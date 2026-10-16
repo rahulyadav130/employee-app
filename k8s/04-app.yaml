@@ -73,7 +73,7 @@ metadata:
   name: employee-app
   namespace: employee-app
 spec:
-  type: ClusterIP
+  type: ClusterIP # type of service
   selector:
     app: employee-app
   ports:
