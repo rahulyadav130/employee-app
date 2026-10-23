@@ -1,4 +1,4 @@
-# ---- Stage 1: install production dependencies ----
+## ---- Stage 1: install production dependencies ----
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -30,3 +30,4 @@ CMD ["node", "src/server.js"]
 # comment 2
 #comment 3 
 #from main
+#comment 4
