@@ -10,7 +10,7 @@ on:
     branches: [main]
 
 env:
-  IMAGE_NAME: ${{ vars.DOCKERHUB_USERNAME }}/employee-app
+  IMAGE_NAME: krahulyadav130/employee-app
 
 jobs:
   test:
