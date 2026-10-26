@@ -51,7 +51,7 @@ jobs:
         with:
           username: ${{ vars.DOCKERHUB_USERNAME}}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+          # it varilable created for docker user and password
       - name: Build and push (push events only)
         uses: docker/build-push-action@v6
         with:
