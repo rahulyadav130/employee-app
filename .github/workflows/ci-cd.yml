@@ -1,6 +1,6 @@
 # CI/CD pipeline:
 #   Pull request  -> run tests and build the image (no push, no deploy)
-#   Push to main  -> run tests, build, push image to GHCR, deploy to Kubernetes
+#   Push to main  -> run tests, build, push image to GHCR, deploy to Kubernetesdsf
 name: CI/CD
 
 on:
