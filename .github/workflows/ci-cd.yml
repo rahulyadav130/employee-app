@@ -82,9 +82,9 @@ jobs:
           echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
       - name: Portcheck api
-        run: nc -vz -w 5 188.248.254.110 6443
-      - name: Portcheck-SSH
         run: nc -vz -w 5 188.248.254.110 22
+      - name: Portcheck-SSH
+        run: nc -vz -w 5 188.248.254.110 6443
       - name: Reachability test
         run: curl -k -sS --max-time 10 https://188.248.254.110:6443/version
         
