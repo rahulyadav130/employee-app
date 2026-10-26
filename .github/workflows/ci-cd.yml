@@ -81,7 +81,9 @@ jobs:
           mkdir -p ~/.kube
           echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
-
+      - name: Reachability test
+        run: curl -k -sS --max-time 10 https://188.248.254.110:6443/version
+        
       - name: Apply manifests (namespace, database, config, app)
         run: |
           kubectl apply -f k8s/00-namespace.yaml
