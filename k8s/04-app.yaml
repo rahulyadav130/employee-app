@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: employee-app
-          image: krahulyadav130/employee-app:latest   # <-- replace YOUR_GITHUB_USER
+          image: krahulyadav130/employee-app:latest  # <-- replace YOUR_GITHUB_USER
           imagePullPolicy: IfNotPresent   # safe: CI uses unique commit-SHA tags
           ports:
             - containerPort: 3000
