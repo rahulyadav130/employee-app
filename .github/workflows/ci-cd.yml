@@ -68,7 +68,7 @@ jobs:
     name: Deploy to Kubernetes
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, rahulagent]
     environment: production     # add required reviewers in GitHub: Settings > Environments
     steps:
       - uses: actions/checkout@v4
