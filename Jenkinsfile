@@ -1,6 +1,7 @@
 pipeline {
     agent { label 'linux' }
-     environment {
+
+    environment {
         IMAGE_NAME = 'krahulyadav130/employee-app'
     }
 
@@ -10,10 +11,9 @@ pipeline {
                 sh 'node --version'
                 sh 'npm ci'
                 sh 'npm test'
-                sh 'hostname'
-                
             }
         }
+
         stage('Build Image') {
             steps {
                 sh '''
@@ -24,7 +24,8 @@ pipeline {
                 '''
             }
         }
-                stage('Push Image') {
+
+        stage('Push Image') {
             when { branch 'main' }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub',
@@ -36,6 +37,20 @@ pipeline {
                         docker tag $IMAGE_NAME:$GIT_COMMIT $IMAGE_NAME:latest
                         docker push $IMAGE_NAME:latest
                         docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy') {
+            when { branch 'main' }
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig-lab', variable: 'KUBECONFIG')]) {
+                    sh '''
+                        kubectl apply -f k8s/
+                        kubectl -n employee-app set image deployment/employee-app \
+                          employee-app=$IMAGE_NAME:$GIT_COMMIT
+                        kubectl -n employee-app rollout status deployment/employee-app --timeout=180s
                     '''
                 }
             }
