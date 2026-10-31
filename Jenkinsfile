@@ -7,6 +7,7 @@ pipeline {
                 sh 'node --version'
                 sh 'npm ci'
                 sh 'npm test'
+                sh 'hostname'
             }
         }
     }
