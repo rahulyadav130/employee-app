@@ -1,5 +1,8 @@
 pipeline {
     agent { label 'linux' }
+     environment {
+        IMAGE_NAME = 'krahulyadav130/employee-app'
+    }
 
     stages {
         stage('Test') {
