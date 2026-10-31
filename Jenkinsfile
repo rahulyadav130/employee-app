@@ -24,5 +24,21 @@ pipeline {
                 '''
             }
         }
+                stage('Push Image') {
+            when { branch 'main' }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub',
+                                                  usernameVariable: 'DH_USER',
+                                                  passwordVariable: 'DH_TOKEN')]) {
+                    sh '''
+                        echo "$DH_TOKEN" | docker login -u "$DH_USER" --password-stdin
+                        docker push $IMAGE_NAME:$GIT_COMMIT
+                        docker tag $IMAGE_NAME:$GIT_COMMIT $IMAGE_NAME:latest
+                        docker push $IMAGE_NAME:latest
+                        docker logout
+                    '''
+                }
+            }
+        }
     }
 }
