@@ -21,6 +21,10 @@ spec:
       labels:
         app: employee-app
     spec:
+      imagePullSecrets:
+        - name: dockerhub-pull
+      
+      
       containers:
         - name: employee-app
           image: krahulyadav130/employee-app:latest  # <-- replace YOUR_GITHUB_USER
