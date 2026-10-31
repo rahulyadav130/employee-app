@@ -3,7 +3,8 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 # npm ci = clean, reproducible install from the lock file
-RUN npm ci --omit=dev && npm cache clean --force
+#RUN npm ci --omit=dev && npm cache clean --force
+RUN --mount=type=secret,id=extra_ca NODE_EXTRA_CA_CERTS=/run/secrets/extra_ca npm ci --omit=dev && npm cache clean --force
 
 # ---- Stage 2: runtime image (small, non-root) ----
 FROM node:22-alpine AS runtime
