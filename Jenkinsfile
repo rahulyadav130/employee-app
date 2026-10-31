@@ -11,7 +11,7 @@ pipeline {
                 sh 'npm ci'
                 sh 'npm test'
                 sh 'hostname'
-                sh 'mkdir /tmp/testvscode'
+                
             }
         }
         stage('Build Image') {
