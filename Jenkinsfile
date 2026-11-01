@@ -64,6 +64,17 @@ pipeline {
                     '''
                 }
             }
+            post {
+                failure {
+                    withCredentials([file(credentialsId: 'kubeconfig-lab', variable: 'KUBECONFIG')]) {
+                        sh '''
+                            echo "Deploy of $IMAGE_TAG failed, rolling back..."
+                            kubectl -n employee-app rollout undo deployment/employee-app
+                            kubectl -n employee-app rollout status deployment/employee-app --timeout=180s
+                        '''
+                    }
+                }
+            }
         }
     }
     post {
