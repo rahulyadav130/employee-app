@@ -40,6 +40,7 @@ app.use((err, req, res, next) => {
 });
 
 async function start() {
+  throw new Error('rollback test: simulated broken release');
   await initDb();
   const server = app.listen(PORT, () => console.log(`Employee app listening on port ${PORT}`));
 
