@@ -66,4 +66,13 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            sh '''
+                docker logout || true
+                docker image rm $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest || true
+            '''
+            cleanWs()    
+        }
+    }
 }
