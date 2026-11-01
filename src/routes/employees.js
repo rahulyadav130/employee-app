@@ -9,7 +9,7 @@ router.get('/', async (req, res, next) => {
   try {
     const [rows] = await pool.query(
       `SELECT id, first_name, last_name, email, phone, department, designation,
-              DATE_FORMAT(date_of_joining, '%Y-%m-%d') AS date_of_joining, created_at
+              DATE_FORMAT(date_of_joining, '%Y-%m-%d') AS date_of_joining, salary, created_at
          FROM employees
         ORDER BY created_at DESC, id DESC`
     );
@@ -29,10 +29,10 @@ router.post('/', async (req, res, next) => {
 
     const [result] = await pool.execute(
       `INSERT INTO employees
-         (first_name, last_name, email, phone, department, designation, date_of_joining)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (first_name, last_name, email, phone, department, designation, date_of_joining, salary)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [data.first_name, data.last_name, data.email, data.phone || null,
-       data.department, data.designation, data.date_of_joining]
+       data.department, data.designation, data.date_of_joining, data.salary]
     );
 
     res.status(201).json({ id: result.insertId, ...data });

@@ -25,10 +25,20 @@ const CREATE_EMPLOYEES_TABLE = `
     department      VARCHAR(80)  NOT NULL,
     designation     VARCHAR(120) NOT NULL,
     date_of_joining DATE         NOT NULL,
+    
     created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 `;
-
+async function addSalaryColumnIfMissing() {
+  const [cols] = await pool.query(
+    `SELECT COUNT(*) AS n FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'employees' AND COLUMN_NAME = 'salary'`
+  );
+  if (cols[0].n === 0) {
+    await pool.query('ALTER TABLE employees ADD COLUMN salary DECIMAL(12,2) NULL AFTER date_of_joining');
+    console.log('Migration: added salary column to employees table');
+  }
+}
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // The database container may take a few seconds to start, so retry on boot
@@ -38,6 +48,7 @@ async function initDb(retries = 10, delayMs = 3000) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await pool.query(CREATE_EMPLOYEES_TABLE);
+      await addSalaryColumnIfMissing();
       console.log('Database ready: employees table is in place');
       return;
     } catch (err) {
