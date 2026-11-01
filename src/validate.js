@@ -4,6 +4,7 @@
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[+0-9 ()-]{7,20}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const SALARY_RE = /^\d{1,10}(\.\d{1,2})?$/;
 
 const DEPARTMENTS = ['Engineering', 'DevOps', 'Human Resources', 'Finance', 'Sales', 'Marketing', 'Operations'];
 
@@ -17,6 +18,7 @@ function validateEmployee(input) {
     department: String(input.department || '').trim(),
     designation: String(input.designation || '').trim(),
     date_of_joining: String(input.date_of_joining || '').trim(),
+    salary: String(input.salary ?? '').trim(),
   };
 
   if (!data.first_name || data.first_name.length > 80) errors.push('First name is required (max 80 characters).');
@@ -28,7 +30,9 @@ function validateEmployee(input) {
   if (!DATE_RE.test(data.date_of_joining) || Number.isNaN(Date.parse(data.date_of_joining))) {
     errors.push('Date of joining must be a valid date (YYYY-MM-DD).');
   }
-
+   if (!SALARY_RE.test(data.salary) || Number(data.salary) <= 0) {
+    errors.push('Salary is required and must be a positive number (max 2 decimal places).');
+  }
   return { errors, data };
 }
 
