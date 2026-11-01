@@ -10,6 +10,7 @@ const valid = {
   department: 'DevOps',
   designation: 'Cloud Engineer',
   date_of_joining: '2026-03-01',
+  salary: '1200000.50',
 };
 
 test('accepts a valid employee and normalises email', () => {
