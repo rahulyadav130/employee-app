@@ -1,5 +1,12 @@
 pipeline {
-    agent { label 'linux' }
+    agent none
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        timeout(time: 1, unit: 'HOURS')
+        disableConcurrentBuilds()
+        timestamps()
+    }
 
     environment {
         IMAGE_NAME = 'krahulyadav130/employee-app'
@@ -7,41 +14,54 @@ pipeline {
     }
 
     stages {
-        stage('Test') {
-            steps {
-                sh 'node --version'
-                sh 'npm ci'
-                sh 'npm test'
-            }
-        }
+        stage('CI') {
+            agent { label 'linux' }
+            stages {
+                stage('Test') {
+                    steps {
+                        sh 'node --version'
+                        sh 'npm ci'
+                        sh 'npm test'
+                    }
+                }
 
-        stage('Build Image') {
-            steps {
-                sh '''
-                    docker build \
-                      --secret id=extra_ca,src=/etc/ssl/certs/ca-certificates.crt \
-                      -t $IMAGE_NAME:$IMAGE_TAG .
-                    docker images $IMAGE_NAME
-                '''
-            }
-        }
+                stage('Build Image') {
+                    steps {
+                        sh '''
+                            docker build \
+                              --secret id=extra_ca,src=/etc/ssl/certs/ca-certificates.crt \
+                              -t $IMAGE_NAME:$IMAGE_TAG .
+                        '''
+                    }
+                }
 
-        stage('Push Image') {
-            when { branch 'main' }
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub',
-                                                  usernameVariable: 'DH_USER',
-                                                  passwordVariable: 'DH_TOKEN')]) {
+                stage('Push Image') {
+                    when { branch 'main' }
+                    steps {
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub',
+                                                          usernameVariable: 'DH_USER',
+                                                          passwordVariable: 'DH_TOKEN')]) {
+                            sh '''
+                                echo "$DH_TOKEN" | docker login -u "$DH_USER" --password-stdin
+                                docker push $IMAGE_NAME:$IMAGE_TAG
+                                docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+                                docker push $IMAGE_NAME:latest
+                            '''
+                        }
+                    }
+                }
+            }
+            post {
+                cleanup {
                     sh '''
-                        echo "$DH_TOKEN" | docker login -u "$DH_USER" --password-stdin
-                         docker push $IMAGE_NAME:$IMAGE_TAG
-                        docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
-                        docker push $IMAGE_NAME:latest
-                        docker logout
+                        docker logout || true
+                        docker image rm $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest || true
                     '''
+                    cleanWs()
                 }
             }
         }
+
         stage('Approval') {
             when { branch 'main' }
             steps {
@@ -52,14 +72,21 @@ pipeline {
                 }
             }
         }
+
         stage('Deploy') {
-            when { branch 'main' }
+            when {
+                beforeAgent true
+                branch 'main'
+            }
+            agent { label 'linux' }
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-lab', variable: 'KUBECONFIG')]) {
                     sh '''
                         sed -i "s|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$IMAGE_TAG|" k8s/04-app.yaml
                         grep "image:" k8s/04-app.yaml
                         kubectl apply -f k8s/04-app.yaml
+                        kubectl -n employee-app annotate deployment/employee-app \
+                          kubernetes.io/change-cause="Jenkins $IMAGE_TAG" --overwrite
                         kubectl -n employee-app rollout status deployment/employee-app --timeout=180s
                     '''
                 }
@@ -74,16 +101,10 @@ pipeline {
                         '''
                     }
                 }
+                cleanup {
+                    cleanWs()
+                }
             }
-        }
-    }
-    post {
-        always {
-            sh '''
-                docker logout || true
-                docker image rm $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest || true
-            '''
-            cleanWs()    
         }
     }
 }
