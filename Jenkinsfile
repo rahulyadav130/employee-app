@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'krahulyadav130/employee-app'
+        IMAGE_TAG  = "v${env.BUILD_NUMBER}"
     }
 
     stages {
@@ -19,7 +20,7 @@ pipeline {
                 sh '''
                     docker build \
                       --secret id=extra_ca,src=/etc/ssl/certs/ca-certificates.crt \
-                      -t $IMAGE_NAME:$GIT_COMMIT .
+                      -t $IMAGE_NAME:$IMAGE_TAG .
                     docker images $IMAGE_NAME
                 '''
             }
