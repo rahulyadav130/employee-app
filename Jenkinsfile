@@ -34,8 +34,8 @@ pipeline {
                                                   passwordVariable: 'DH_TOKEN')]) {
                     sh '''
                         echo "$DH_TOKEN" | docker login -u "$DH_USER" --password-stdin
-                        docker push $IMAGE_NAME:$GIT_COMMIT
-                        docker tag $IMAGE_NAME:$GIT_COMMIT $IMAGE_NAME:latest
+                         docker push $IMAGE_NAME:$IMAGE_TAG
+                        docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
                         docker push $IMAGE_NAME:latest
                         docker logout
                     '''
