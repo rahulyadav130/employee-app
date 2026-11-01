@@ -48,7 +48,7 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-lab', variable: 'KUBECONFIG')]) {
                     sh '''
-                        sed -i "s|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$GIT_COMMIT|" k8s/04-app.yaml
+                        sed -i "s|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$IMAGE_TAG|" k8s/04-app.yaml
                         grep "image:" k8s/04-app.yaml
                         kubectl apply -f k8s/04-app.yaml
                         kubectl -n employee-app rollout status deployment/employee-app --timeout=180s
