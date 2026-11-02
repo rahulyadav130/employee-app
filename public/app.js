@@ -10,7 +10,11 @@ function esc(value) {
   div.textContent = value ?? '';
   return div.innerHTML;
 }
-
+// Format salary as Indian Rupees (e.g. ₹12,00,000). Older rows may have no salary.
+const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 });
+function formatSalary(value) {
+  return value === null || value === undefined || value === '' ? '—' : inr.format(Number(value));
+}
 function showMessage(text, isError) {
   message.textContent = text;
   message.className = isError ? 'error' : 'success';
@@ -36,7 +40,7 @@ async function loadEmployees() {
     countEl.textContent = `(${employees.length})`;
 
     if (employees.length === 0) {
-      rows.innerHTML = '<tr><td colspan="7" class="muted">No employees yet.</td></tr>';
+      rows.innerHTML = '<tr><td colspan="8" class="muted">No employees yet.</td></tr>';
       return;
     }
 
@@ -48,10 +52,11 @@ async function loadEmployees() {
         <td>${esc(e.department)}</td>
         <td>${esc(e.designation)}</td>
         <td>${esc(e.date_of_joining)}</td>
+        <td>${esc(formatSalary(e.salary))}</td>
         <td><button class="danger" data-id="${Number(e.id)}">Delete</button></td>
       </tr>`).join('');
   } catch (err) {
-    rows.innerHTML = `<tr><td colspan="7" class="error">${esc(err.message)}</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="8" class="error">${esc(err.message)}</td></tr>`;
   }
 }
 
