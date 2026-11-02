@@ -44,13 +44,14 @@ pipeline {
                                                           passwordVariable: 'DH_TOKEN')]) {
                             sh '''
                                 echo "$DH_TOKEN" | docker login -u "$DH_USER" --password-stdin
+                                docker push $IMAGE_NAME:$IMAGE_TAG
                                 if [ "$BRANCH_NAME" = "main" ]; then
                                     docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
                                     docker push $IMAGE_NAME:latest
                                 fi    
-                                    #docker push $IMAGE_NAME:$IMAGE_TAG
-                                    #docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
-                                    #docker push $IMAGE_NAME:latest
+                                     
+                                     
+                                     
                             '''
                         }
                     }
@@ -78,39 +79,39 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            when {
-                beforeAgent true
-                branch 'dev'
-            }
-            agent { label 'linux' }
-            steps {
-                withCredentials([file(credentialsId: 'kubeconfig-lab', variable: 'KUBECONFIG')]) {
-                    sh '''
-                        sed -i "s|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$IMAGE_TAG|" k8s/04-app.yaml
+        // stage('Deploy') {
+        //     when {
+        //         beforeAgent true
+        //         branch 'dev'
+        //     }
+        //     agent { label 'linux' }
+        //     steps {
+        //         withCredentials([file(credentialsId: 'kubeconfig-lab', variable: 'KUBECONFIG')]) {
+        //             sh '''
+        //                 sed -i "s|image: $IMAGE_NAME:.*|image: $IMAGE_NAME:$IMAGE_TAG|" k8s/04-app.yaml
                         
-                        grep "image:" k8s/04-app.yaml
-                        kubectl apply -f k8s/
-                        kubectl -n employee-app-dev annotate deployment/employee-app-dev \
-                          kubernetes.io/change-cause="Jenkins $IMAGE_TAG" --overwrite
-                        kubectl -n employee-app-dev rollout status deployment/employee-app-dev --timeout=180s
-                    '''
-                }
-            }
-            post {
-                failure {
-                    withCredentials([file(credentialsId: 'kubeconfig-lab', variable: 'KUBECONFIG')]) {
-                        sh '''
-                            echo "Deploy of $IMAGE_TAG failed, rolling back..."
-                            kubectl -n employee-app-dev rollout undo deployment/employee-app-dev
-                            kubectl -n employee-app-dev rollout status deployment/employee-app-dev --timeout=180s
-                        '''
-                    }
-                }
-                cleanup {
-                    cleanWs()
-                }
-            }
-        }
+        //                 grep "image:" k8s/04-app.yaml
+        //                 kubectl apply -f k8s/
+        //                 kubectl -n employee-app-dev annotate deployment/employee-app-dev \
+        //                   kubernetes.io/change-cause="Jenkins $IMAGE_TAG" --overwrite
+        //                 kubectl -n employee-app-dev rollout status deployment/employee-app-dev --timeout=180s
+        //             '''
+        //         }
+        //     }
+        //     post {
+        //         failure {
+        //             withCredentials([file(credentialsId: 'kubeconfig-lab', variable: 'KUBECONFIG')]) {
+        //                 sh '''
+        //                     echo "Deploy of $IMAGE_TAG failed, rolling back..."
+        //                     kubectl -n employee-app-dev rollout undo deployment/employee-app-dev
+        //                     kubectl -n employee-app-dev rollout status deployment/employee-app-dev --timeout=180s
+        //                 '''
+        //             }
+        //         }
+        //         cleanup {
+        //             cleanWs()
+        //         }
+        //     }
+        // }
     }
 }
