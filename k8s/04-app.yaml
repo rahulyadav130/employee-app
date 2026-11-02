@@ -2,10 +2,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: employee-app
-  namespace: employee-app
+  name: employee-app-dev
+  namespace: employee-app-dev
   labels:
-    app: employee-app
+    app: employee-app-dev
 spec:
   replicas: 2
   strategy:
@@ -15,18 +15,18 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app: employee-app
+      app: employee-app-dev
   template:
     metadata:
       labels:
-        app: employee-app
+        app: employee-app-dev
     spec:
       imagePullSecrets:
         - name: dockerhub-pull
       
       
       containers:
-        - name: employee-app
+        - name: employee-app-dev
           image: krahulyadav130/employee-app:latest  # <-- replace YOUR_GITHUB_USER
           imagePullPolicy: IfNotPresent   # safe: CI uses unique commit-SHA tags
           ports:
@@ -39,7 +39,7 @@ spec:
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mysql-secret
+                  name: mysql-secret-dev
                   key: MYSQL_PASSWORD
           # Readiness: pod gets traffic only when the DB is reachable
           readinessProbe:
@@ -74,12 +74,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: employee-app
-  namespace: employee-app
+  name: employee-app-dev
+  namespace: employee-app-dev
 spec:
   type: NodePort # type of service
   selector:
-    app: employee-app
+    app: employee-app-dev
   ports:
     - name: http
       port: 80
@@ -89,18 +89,18 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: employee-app
-  namespace: employee-app
+  name: employee-app-dev
+  namespace: employee-app-dev
 spec:
   ingressClassName: nginx
   rules:
-    - host: employee.example.com      # <-- replace with your domain (or use nip.io for testing)
+    - host: dev.jrrahulyadav.com     # <-- replace with your domain (or use nip.io for testing)
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: employee-app
+                name: employee-app-dev
                 port:
                   number: 80

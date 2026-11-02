@@ -3,27 +3,27 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
-  namespace: employee-app
+  namespace: employee-app-dev
   labels:
-    app: mysql
+    app: mysql-dev
 spec:
   replicas: 1                 # a database must run as a single writer here
   strategy:
     type: Recreate            # stop the old pod before starting the new one (RWO volume can't be shared)
   selector:
     matchLabels:
-      app: mysql
+      app: mysql-dev
   template:
     metadata:
       labels:
-        app: mysql
+        app: mysql-dev
     spec:
       containers:
-        - name: mysql
+        - name: mysql-dev
           image: mysql:8.4
           ports:
             - containerPort: 3306
-              name: mysql
+              name: mysql-dev
           env:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
@@ -68,14 +68,14 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: mysql-data
+            claimName: mysql-data-dev
 ---
 # Internal-only Service. The app reaches MySQL at hostname "mysql" inside the namespace.
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
-  namespace: employee-app
+  namespace: employee-app-dev
 spec:
   type: ClusterIP
   selector:

@@ -3,7 +3,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mysql-data
-  namespace: employee-app
+  namespace: employee-app-dev
 spec:
   accessModes:
     - ReadWriteOnce
