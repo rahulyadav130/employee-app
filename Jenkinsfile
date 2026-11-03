@@ -62,16 +62,16 @@ pipeline {
             }
         }
 
-        stage('Approval') {
-            when { branch 'main' }
-            steps {
-                timeout(time: 30, unit: 'MINUTES') {
-                    input message: "Deploy ${env.IMAGE_TAG} to production?",
-                          ok: 'Deploy',
-                          submitter: 'admin'
-                }
-            }
-        }
+        // stage('Approval') {
+        //     when { branch 'main' }
+        //     steps {
+        //         timeout(time: 30, unit: 'MINUTES') {
+        //             input message: "Deploy ${env.IMAGE_TAG} to production?",
+        //                   ok: 'Deploy',
+        //                   submitter: 'admin'
+        //         }
+        //     }
+        // }
 
         stage('Deploy') {
             when {
